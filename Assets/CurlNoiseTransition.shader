@@ -5,6 +5,8 @@ Shader "Unlit/CurlNoiseTransition"
     {
         _MainTex ("Texture", 2D) = "white" {}
 		iChannel0 ("Texture", 2D) = "whtie" {}
+		iChannel1("Texture", 2D) = "whtie" {}
+		_Frequency ("frequency", Float) = 0.5
     }
     SubShader
     {
@@ -38,6 +40,8 @@ Shader "Unlit/CurlNoiseTransition"
             float4 _MainTex_ST;
 
 			sampler2D iChannel0;
+			sampler2D iChannel1;
+			float _Frequency;
 
             v2f vert (appdata v)
             {
@@ -154,16 +158,22 @@ Shader "Unlit/CurlNoiseTransition"
             {
                 // Normalized pixel coordinates (from 0 to 1)
 				float2 uv = i.uv.xy; // fragCoord/iResolution.xy
-				float f = sin(_Time.y) * 0.5 + 0.5;
-				float3 curl = curlNoise(float3(uv, 1.) * 5. + _Time.y) / 1.;
+				//uv.x -= _Time.y * 0.03;
+				//uv.y -= _Time.y * 0.05;
+				//float f = sin(_Time.y) * 0.5 + 0.5;
+				float f = sin(_Time.y*.5) *_Frequency;
+				//float3 curl = curlNoise(float3(uv, 1.) * 5. + sin(_Time.y*.5)) / 2.;
+				float3 curl = curlNoise(float3(uv, 1.) * 8.) / 2.;
 
 				float4 t0 = tex2D(iChannel0, float2(uv.x, uv.y + f * (curl.x)));
-				float4 t1 = float4(0., 0., 0., 0.);
-
+				//float4 t1 = float4(0., 0., 0., 0.);
+				float4 t1 = tex2D(iChannel1, float2(uv.x, uv.y + f * (curl.x)));
 				// Time varying pixel color
 				uv.x += curl.x;
+				//uv.x += curl.x;
 				// Output to screen
-				return lerp(t0, t1, f);
+				//return t0;//lerp(t0, t1, f);
+				return lerp(t0, t1, f);;
 				// note: colors don't overlap vec4(vec3(curl.x, curl.y, curl.z), 1.0)
             }
             ENDCG
